@@ -1,0 +1,27 @@
+name: iOS checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show toolchain
+        run: xcodebuild -version
+      - name: Core XCTest suite
+        run: swift test --package-path Core
+      - name: Compile app and UI tests for iOS Simulator (requires Xcode 26+)
+        run: >-
+          xcodebuild build-for-testing
+          -project SpaceXExplorer.xcodeproj
+          -scheme SpaceXExplorer
+          -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath build/DerivedData
+          CODE_SIGNING_ALLOWED=NO
