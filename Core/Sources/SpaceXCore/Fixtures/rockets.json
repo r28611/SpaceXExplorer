@@ -1,0 +1,66 @@
+[
+  {
+    "id": "demo-falcon1",
+    "name": "Falcon 1",
+    "type": "rocket",
+    "description": "Falcon 1 sample specifications for the hiring assignment. These local fixtures demonstrate the interface and are not current operational data.",
+    "active": false,
+    "success_rate_pct": 40,
+    "flickr_images": [
+      "https://live.staticflickr.com/65535/49927519643_b43c6d4c44_o.jpg"
+    ],
+    "engines": {
+      "number": 1,
+      "type": "Merlin",
+      "version": ""
+    }
+  },
+  {
+    "id": "demo-falcon9",
+    "name": "Falcon 9",
+    "type": "rocket",
+    "description": "Falcon 9 sample specifications for the hiring assignment. These local fixtures demonstrate the interface and are not current operational data.",
+    "active": true,
+    "success_rate_pct": 98,
+    "flickr_images": [
+      "https://live.staticflickr.com/65535/49927519643_b43c6d4c44_o.jpg"
+    ],
+    "engines": {
+      "number": 9,
+      "type": "Merlin",
+      "version": ""
+    }
+  },
+  {
+    "id": "demo-heavy",
+    "name": "Falcon Heavy",
+    "type": "rocket",
+    "description": "Falcon Heavy sample specifications for the hiring assignment. These local fixtures demonstrate the interface and are not current operational data.",
+    "active": true,
+    "success_rate_pct": 100,
+    "flickr_images": [
+      "https://live.staticflickr.com/65535/49927519643_b43c6d4c44_o.jpg"
+    ],
+    "engines": {
+      "number": 27,
+      "type": "Merlin",
+      "version": ""
+    }
+  },
+  {
+    "id": "demo-starship",
+    "name": "Starship",
+    "type": "rocket",
+    "description": "Starship sample specifications for the hiring assignment. These local fixtures demonstrate the interface and are not current operational data.",
+    "active": false,
+    "success_rate_pct": 0,
+    "flickr_images": [
+      "https://live.staticflickr.com/65535/49927519643_b43c6d4c44_o.jpg"
+    ],
+    "engines": {
+      "number": 33,
+      "type": "Raptor",
+      "version": ""
+    }
+  }
+]

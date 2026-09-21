@@ -1,0 +1,14 @@
+.DS_Store
+.build/
+DerivedData/
+.swiftpm/
+*.xcuserstate
+xcuserdata/
+*.xcresult
+*.ipa
+*.dSYM
+build/
+.env
+.env.*
+!.env.example
+
