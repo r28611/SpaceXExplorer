@@ -1,6 +1,6 @@
 # Runtime verification checklist
 
-Core tests, the unsigned device build, and UI test bundle compilation are verified. These runtime checks remain to be performed on an iOS 26+ simulator or device.
+Core tests, unsigned device and Simulator builds, and UI test bundle compilation are verified. These runtime checks remain to be performed on an iOS 26+ simulator or device.
 
 ## Demo walkthrough
 

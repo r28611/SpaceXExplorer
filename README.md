@@ -91,7 +91,7 @@ xcodebuild build -project SpaceXExplorer.xcodeproj \
 
 To select a beta without changing the system-wide Xcode selection, prefix the command with `DEVELOPER_DIR=/path/to/Xcode-beta.app/Contents/Developer`.
 
-**Verified here:** 26 core XCTest tests passed; unsigned iOS device build and UI test bundle compilation (`build-for-testing`) succeeded. Core coverage includes HTTP status/decoding/transport handling, DTO mapping, fixture pagination, date boundaries and DST, demo/live isolation, cache persistence/corruption, stale page invalidation, cancellation, duplicate page requests, and late responses.
+**Verified here:** 26 core XCTest tests passed; unsigned iOS device and Simulator builds, including UI test bundle compilation (`build-for-testing`), succeeded. Core coverage includes HTTP status/decoding/transport handling, DTO mapping, fixture pagination, date boundaries and DST, demo/live isolation, cache persistence/corruption, stale page invalidation, cancellation, duplicate page requests, and late responses.
 
 **Not yet verified:** simulator execution, UI smoke tests, visual/accessibility inspection on a running device, and live success responses from the unavailable upstream service. The local session could not connect to CoreSimulator. See the [manual checklist](docs/Verification.md). UI tests are committed but are not reported as passed.
 

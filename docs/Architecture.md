@@ -1,5 +1,9 @@
 # Architecture decisions
 
+## Build architectures
+
+Debug uses `ONLY_ACTIVE_ARCH = YES`, matching Swift Package Manager's Debug behavior for a selected simulator. The app and Core package therefore build for the same destination architecture. Release uses `NO`. CI explicitly overrides the setting to `NO` for all targets, including packages, to compile both simulator architectures in its generic-destination build. Neither architecture is excluded or hardcoded.
+
 ## Small, feature-based MVVM
 
 Four screens do not need a navigation framework, global state store, or a use-case class for each request. SwiftUI owns navigation and feature queries. A generic observable page model centralizes the difficult shared mechanics; the repository keeps data-source decisions out of views. The local Core package makes behavior testable without a simulator.
