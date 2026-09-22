@@ -1,6 +1,6 @@
 # Space Explorer
 
-A SwiftUI iOS app for browsing SpaceX launches and rockets, built for the Swift Developer Assignment. Uses native Liquid Glass on iOS 26+, Swift 6 concurrency, Observation, URLSession, and XCTest. No third-party dependencies.
+A SwiftUI iOS app for browsing SpaceX launches and rockets. Uses native Liquid Glass on iOS 26+, Swift 6 concurrency, Observation, URLSession, and XCTest. No third-party dependencies.
 
 ## Run
 
@@ -11,9 +11,9 @@ A SwiftUI iOS app for browsing SpaceX launches and rockets, built for the Swift 
 
 This build was compiled with Xcode **27.2 beta (27B5019j)**. The code targets iOS 26 APIs; compatibility with a stable Xcode release has not yet been verified.
 
-## Agreed API fallback
+## API fallback
 
-The assignment team approved retaining the real SpaceX networking contract and using local mock data when the API is unavailable. Live checks on September 20, 2026 returned HTTP 525 for launches and rockets. The upstream repository is archived.
+The app uses the SpaceX API with local mock data as a fallback when the service is unavailable. Live checks on September 20, 2026 returned HTTP 525 for launches and rockets. The upstream repository is archived.
 
 | Mode | Behavior |
 | --- | --- |
@@ -95,7 +95,7 @@ To select a beta without changing the system-wide Xcode selection, prefix the co
 
 **Not yet verified:** simulator execution, UI smoke tests, visual/accessibility inspection on a running device, and live success responses from the unavailable upstream service. The local session could not connect to CoreSimulator. See the [manual checklist](docs/Verification.md). UI tests are committed but are not reported as passed.
 
-The GitHub Actions workflow runs core tests and compiles the app/UI test bundle for the simulator SDK using the runner's selected Xcode. It requires Xcode 26+; the workflow has not been run remotely. This repository has been initialized locally; no GitHub remote or public publication is configured.
+The GitHub Actions workflow runs core tests and compiles the app/UI test bundle for the simulator SDK using the runner's selected Xcode. It requires Xcode 26+.
 
 ## References and assets
 
@@ -105,4 +105,4 @@ The GitHub Actions workflow runs core tests and compiles the app/UI test bundle 
 - Remote example imagery/video URLs are taken from the SpaceX API README's historical Crew Dragon demo launch example. They remain hosted by their original providers and may become unavailable. No third-party photographs are bundled.
 - App icon and fallback artwork are original geometric illustrations. No SpaceX logo is included.
 
-This project is not affiliated with SpaceX. The assignment PDF and personal files are not included in the repository.
+This project is not affiliated with SpaceX.
