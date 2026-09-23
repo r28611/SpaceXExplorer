@@ -147,7 +147,7 @@ private struct DateFilterView: View {
                         Button(role: .destructive) {
                             filter.start = nil; filter.endExclusive = nil; dismiss()
                         } label: {
-                            Label("Clear", systemImage: "xmark.circle")
+                            Text("Clear")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.glass)
@@ -161,7 +161,7 @@ private struct DateFilterView: View {
                                 dismiss()
                             } catch { self.error = error.localizedDescription }
                         } label: {
-                            Label("Apply", systemImage: "checkmark")
+                            Text("Apply")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.glassProminent)
