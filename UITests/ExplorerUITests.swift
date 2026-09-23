@@ -36,8 +36,8 @@ final class ExplorerUITests: XCTestCase {
         app.buttons["filterDates"].tap()
         XCTAssertTrue(app.navigationBars["Date range"].waitForExistence(timeout: 5))
         app.buttons["applyDateRange"].tap()
-        XCTAssertTrue(app.staticTexts["Date range applied · UTC"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["appliedDateRange"].waitForExistence(timeout: 5))
         app.buttons["Clear"].tap()
-        XCTAssertFalse(app.staticTexts["Date range applied · UTC"].exists)
+        XCTAssertFalse(app.staticTexts["appliedDateRange"].exists)
     }
 }

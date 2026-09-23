@@ -32,13 +32,20 @@ struct LaunchesView: View {
                 }
                 .pickerStyle(.segmented)
                 .accessibilityIdentifier("launchPeriod")
-                if filter.start != nil {
+                if let range = appliedDateRange {
                     HStack {
-                        Label("Date range applied · UTC", systemImage: "calendar")
-                            .font(.footnote)
+                        Label {
+                            Text(range)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .accessibilityIdentifier("appliedDateRange")
+                        } icon: {
+                            Image(systemName: "calendar")
+                        }
+                        .font(.footnote)
                         Spacer()
                         Button("Clear") { filter.start = nil; filter.endExclusive = nil }
                             .font(.footnote)
+                            .fixedSize()
                     }
                 }
             }
@@ -102,6 +109,16 @@ struct LaunchesView: View {
         .task(id: filter) { await reload(keepingContent: false) }
         .refreshable { await reload(keepingContent: true) }
         .onDisappear { refreshTask?.cancel() }
+    }
+
+    private var appliedDateRange: String? {
+        guard let start = filter.start, let endExclusive = filter.endExclusive,
+              let end = LaunchFilter.utcCalendar.date(byAdding: .day, value: -1, to: endExclusive) else { return nil }
+        let formatter = DateFormatter()
+        formatter.calendar = LaunchFilter.utcCalendar
+        formatter.timeZone = LaunchFilter.utcCalendar.timeZone
+        formatter.setLocalizedDateFormatFromTemplate("d MMM yyyy")
+        return "\(formatter.string(from: start)) – \(formatter.string(from: end)) · UTC"
     }
 
     private func refresh() {
