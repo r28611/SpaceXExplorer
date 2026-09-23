@@ -24,7 +24,8 @@ public actor SpaceXRepository {
     public func launches(filter: LaunchFilter, page: Int, size: Int,
                          source: DataSource? = nil) async throws -> Snapshot<Page<Launch>> {
         let prefix = launchPrefix(filter, size: size)
-        return try await fetch(key: prefix + String(page), invalidate: page == 1 ? prefix : nil,
+        let request = await pageRequest(prefix: prefix, page: page, source: source)
+        return try await fetch(key: prefix + String(page), pageRequest: request, replacingPages: page == 1,
                                source: source, allowDemo: page == 1) { service in
             try await service.launches(filter: filter, page: page, size: size)
         }
@@ -37,13 +38,16 @@ public actor SpaceXRepository {
 
     public func rockets(page: Int, size: Int, source: DataSource? = nil) async throws -> Snapshot<Page<Rocket>> {
         let prefix = "rockets/\(size)/"
+        let request = await pageRequest(prefix: prefix, page: page, source: source)
         let result: Snapshot<Page<Rocket>> = try await fetch(
-            key: prefix + String(page), invalidate: page == 1 ? prefix : nil,
+            key: prefix + String(page), pageRequest: request, replacingPages: page == 1,
             source: source, allowDemo: page == 1) { service in
                 try await service.rockets(page: page, size: size)
             }
-        if result.source == .live, !result.isCached {
-            for rocket in result.value.items { await cache.write(rocket, key: "rocket/\(rocket.id)", date: result.fetchedAt) }
+        if result.source == .live, !result.isCached, let request {
+            for rocket in result.value.items {
+                await cache.writeIfCurrent(rocket, key: "rocket/\(rocket.id)", date: result.fetchedAt, request: request)
+            }
         }
         return result
     }
@@ -60,7 +64,8 @@ public actor SpaceXRepository {
     }
 
     private func fetch<Value: Codable & Sendable>(
-        key: String, invalidate prefix: String? = nil, source: DataSource?, allowDemo: Bool,
+        key: String, pageRequest: DiskCache.PageRequest? = nil, replacingPages: Bool = false,
+        source: DataSource?, allowDemo: Bool,
         operation: @Sendable (any SpaceXService) async throws -> Value
     ) async throws -> Snapshot<Value> {
         if source == .demo || mode == .demo {
@@ -70,12 +75,18 @@ public actor SpaceXRepository {
             let value = try await operation(live)
             try Task.checkCancellation()
             let date = now()
-            if let prefix { await cache.invalidate(prefix: prefix) }
-            await cache.write(value, key: key, date: date)
+            if let pageRequest {
+                let accepted = await cache.writePage(value, key: key, date: date,
+                                                     request: pageRequest, replacingPages: replacingPages)
+                guard accepted else { throw CancellationError() }
+            } else {
+                await cache.write(value, key: key, date: date)
+            }
             return Snapshot(value: value, source: .live, fetchedAt: date)
         } catch is CancellationError { throw CancellationError() }
         catch {
             try Task.checkCancellation()
+            if let pageRequest, !(await cache.isCurrent(pageRequest)) { throw CancellationError() }
             if let cached = await cache.read(Value.self, key: key) {
                 return Snapshot(value: cached.value, source: .live, fetchedAt: cached.fetchedAt,
                                 isCached: true, notice: error.localizedDescription)
@@ -86,6 +97,11 @@ public actor SpaceXRepository {
             return Snapshot(value: try await operation(demo), source: .demo, fetchedAt: now(),
                             notice: "Live API unavailable. Showing local sample data.")
         }
+    }
+
+    private func pageRequest(prefix: String, page: Int, source: DataSource?) async -> DiskCache.PageRequest? {
+        guard mode != .demo, source != .demo else { return nil }
+        return await cache.beginPageRequest(prefix: prefix, refreshing: page == 1)
     }
 
     private func launchPrefix(_ filter: LaunchFilter, size: Int) -> String {

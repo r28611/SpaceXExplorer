@@ -34,6 +34,10 @@ Domain values are Sendable; UI mutation is MainActor-isolated. Repository and ca
 
 Screen generation tokens prevent an old query or page response from changing newer visible state. Task cancellation is checked at repository and presentation boundaries. A cache read precedes network revalidation; refresh never blanks useful rows. Only one load-more request per page model may execute at a time.
 
+Refreshing retained content preserves its pagination cursor until replacement data succeeds. The loading guard blocks pagination during refresh; failure or cancellation leaves the original cursor usable.
+
+The cache also owns a generation per query prefix. A first-page request rotates that generation without deleting saved content. Each page response carries its captured generation to the cache, where validation, successful first-page invalidation, and writing happen without suspension. Obsolete responses are discarded as cancellation, including derived rocket detail writes. Failed refreshes retain the existing saved page chain, and refreshing one filter does not invalidate another filter's requests. These generations are in-memory concurrency guards; they do not change the on-disk schema.
+
 File snapshots suit a read-only assignment. They are intentionally not an offline database. SwiftData would be a better fit for favorites, edits, or complete offline query support. No synchronization queue or migration framework is needed for disposable versioned cache records.
 
 The image pipeline isolates disk work and downsampling from the UI, coalesces downloads, and bounds retained memory/disk data. Cached images use URL identity and remain until eviction; remote image revalidation/ETag handling is a possible future improvement. Shared image requests can finish after one cell disappears so other cells can reuse them.

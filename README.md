@@ -58,9 +58,9 @@ See [architecture decisions](docs/Architecture.md) for tradeoffs and edge cases.
 ## Offline and caching
 
 - Cached first pages appear before revalidation. Every list refresh attempts the API; there is no freshness interval that suppresses explicit refreshes.
-- A failed refresh keeps useful content on screen. Cached results include the original fetch time.
+- A failed or canceled refresh keeps visible content and its pagination cursor. Cached results include the original fetch time.
 - Query cache keys include the date/period filter, sort implied by period, page, and page size. Record schema version is validated on read.
-- Successful first-page refresh invalidates the older page chain for that query.
+- Successful first-page refresh invalidates the older page chain for that query. Query generations prevent obsolete in-flight responses from writing those pages back into the cache.
 - Cache files are atomic, actor-isolated, capped at 100 entries / 10 MB, and stored in the app's disposable Caches directory. Corruption becomes a cache miss. Persistence errors do not discard a successful network response.
 - Previously loaded rocket list records are cached individually for detail navigation.
 - Offline access covers fetched pages/details only. An uncached query in live-only mode reports failure, not an empty result. Automatic mode may instead show the visibly labeled demo dataset.
@@ -91,7 +91,7 @@ xcodebuild build -project SpaceXExplorer.xcodeproj \
 
 To select a beta without changing the system-wide Xcode selection, prefix the command with `DEVELOPER_DIR=/path/to/Xcode-beta.app/Contents/Developer`.
 
-**Verified here:** 26 core XCTest tests passed; unsigned iOS device and Simulator builds, including UI test bundle compilation (`build-for-testing`), succeeded. Core coverage includes HTTP status/decoding/transport handling, DTO mapping, fixture pagination, date boundaries and DST, demo/live isolation, cache persistence/corruption, stale page invalidation, cancellation, duplicate page requests, and late responses.
+**Verified here:** 35 core XCTest tests passed; unsigned iOS device and Simulator builds, including UI test bundle compilation (`build-for-testing`), succeeded. Core coverage includes HTTP status/decoding/transport handling, DTO mapping, fixture pagination, date boundaries and DST, demo/live isolation, cache persistence/corruption, stale page invalidation, cancellation, duplicate page requests, and late responses. Regression coverage also verifies pagination recovery after failed/canceled refreshes, obsolete cache-write rejection for launch and rocket pages, overlapping first-page refreshes, and independent query generations.
 
 **Not yet verified:** simulator execution, UI smoke tests, visual/accessibility inspection on a running device, and live success responses from the unavailable upstream service. The local session could not connect to CoreSimulator. See the [manual checklist](docs/Verification.md). UI tests are committed but are not reported as passed.
 

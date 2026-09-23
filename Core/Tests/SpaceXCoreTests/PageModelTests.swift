@@ -77,6 +77,69 @@ final class PageModelTests: XCTestCase {
         XCTAssertFalse(model.isLoading)
     }
 
+    func testFailedRefreshPreservesPaginationOfVisibleDemo() async throws {
+        let model = PageModel<Launch>()
+        let first = try await FixtureService().launches(filter: .init(), page: 1, size: 8)
+        let second = try await FixtureService().launches(filter: .init(), page: 2, size: 8)
+        await model.reload { _, _ in Snapshot(value: first, source: .demo) }
+
+        await model.reload(keepingContent: true) { _, _ in throw AppError.decoding }
+
+        XCTAssertEqual(model.items, first.items)
+        XCTAssertEqual(model.nextPage, 2)
+        XCTAssertEqual(model.total, 24)
+        XCTAssertEqual(model.source, .demo)
+        XCTAssertNotNil(model.error)
+        await model.loadMore { page, source in
+            XCTAssertEqual(page, 2)
+            XCTAssertEqual(source, .demo)
+            return Snapshot(value: second, source: .demo)
+        }
+        XCTAssertEqual(model.items, first.items + second.items)
+        XCTAssertEqual(model.nextPage, 3)
+    }
+
+    func testCancelledRefreshPreservesPagination() async throws {
+        let model = PageModel<Launch>()
+        let first = try await FixtureService().launches(filter: .init(), page: 1, size: 8)
+        await model.reload { _, _ in Snapshot(value: first, source: .live) }
+        await model.reload(keepingContent: true) { _, _ in throw CancellationError() }
+        XCTAssertEqual(model.nextPage, 2)
+        XCTAssertEqual(model.items, first.items)
+        XCTAssertNil(model.error)
+        XCTAssertFalse(model.isLoading)
+    }
+
+    func testCachedPaginationSurvivesFailedRevalidation() async throws {
+        let model = PageModel<Launch>()
+        let first = try await FixtureService().launches(filter: .init(), page: 1, size: 8)
+        await model.reload(cached: { Snapshot(value: first, source: .live, isCached: true) }) { _, _ in
+            throw AppError.offline
+        }
+        XCTAssertEqual(model.items, first.items)
+        XCTAssertEqual(model.nextPage, 2)
+        XCTAssertTrue(model.isCached)
+    }
+
+    func testRefreshBlocksLoadMoreAndReplacesOldPaginationOnSuccess() async throws {
+        let model = PageModel<Launch>()
+        let first = try await FixtureService().launches(filter: .init(), page: 1, size: 8)
+        await model.reload { _, _ in Snapshot(value: first, source: .demo) }
+        let gate = Gate<Snapshot<Page<Launch>>>()
+        let refresh = Task { await model.reload(keepingContent: true) { _, _ in await gate.value() } }
+        await gate.waitUntilStarted()
+        await model.loadMore { _, _ in
+            XCTFail("Retaining the cursor must not allow pagination during refresh")
+            throw AppError.offline
+        }
+        await gate.resolve(Snapshot(value: Page(items: [], nextPage: nil, total: 0), source: .live))
+        await refresh.value
+        XCTAssertTrue(model.items.isEmpty)
+        XCTAssertNil(model.nextPage)
+        XCTAssertEqual(model.source, .live)
+        XCTAssertFalse(model.isLoading)
+    }
+
     func testPaginationRejectsSourceChange() async throws {
         let values = try await fixtures()
         let model = PageModel<Launch>()

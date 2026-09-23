@@ -7,6 +7,12 @@ public actor DiskCache {
     private let directory: URL
     private let limit: Int
     private let logger = Logger(subsystem: "SpaceXExplorer", category: "Cache")
+    private var pageGenerations: [String: UUID] = [:]
+
+    struct PageRequest: Sendable {
+        let prefix: String
+        let generation: UUID
+    }
     private struct Record: Codable {
         let version: Int
         let key: String
@@ -17,6 +23,38 @@ public actor DiskCache {
     public init(directory: URL, limit: Int = 100) {
         self.directory = directory
         self.limit = max(1, limit)
+    }
+
+    /// Starting a refresh obsoletes in-flight writes, but keeps saved pages for failure recovery.
+    func beginPageRequest(prefix: String, refreshing: Bool) -> PageRequest {
+        let generation: UUID
+        if !refreshing, let current = pageGenerations[prefix] {
+            generation = current
+        } else {
+            generation = UUID()
+            pageGenerations[prefix] = generation
+        }
+        return PageRequest(prefix: prefix, generation: generation)
+    }
+
+    func isCurrent(_ request: PageRequest) -> Bool {
+        pageGenerations[request.prefix] == request.generation
+    }
+
+    /// Validation, invalidation, and persistence run in one actor turn, with no suspension point.
+    func writePage<Value: Codable & Sendable>(_ value: Value, key: String, date: Date,
+                                              request: PageRequest, replacingPages: Bool) -> Bool {
+        guard !Task.isCancelled, isCurrent(request) else { return false }
+        if replacingPages { invalidate(prefix: request.prefix) }
+        write(value, key: key, date: date)
+        return true
+    }
+
+    /// Rocket detail records derived from a page must obey the same generation as that page.
+    func writeIfCurrent<Value: Codable & Sendable>(_ value: Value, key: String, date: Date,
+                                                   request: PageRequest) {
+        guard !Task.isCancelled, isCurrent(request) else { return }
+        write(value, key: key, date: date)
     }
 
     public func read<Value: Codable & Sendable>(_ type: Value.Type, key: String) -> Snapshot<Value>? {

@@ -30,15 +30,14 @@ public final class PageModel<Item: Codable & Identifiable & Sendable> where Item
         isLoadingMore = false
         error = nil
         pageError = nil
-        nextPage = nil
         if !keepingContent {
+            nextPage = nil
             items = []; source = nil; notice = nil; fetchedAt = nil; hasLoaded = false; isCached = false
         }
         defer { if generation == token { isLoading = false } }
         if items.isEmpty, let snapshot = await cached(), generation == token, !Task.isCancelled {
             apply(snapshot, append: false)
-            // Cached content is visible, but pagination waits for revalidation.
-            nextPage = nil
+            // Keep the saved cursor if revalidation fails. isLoading blocks loadMore until it finishes.
         }
         do {
             let snapshot = try await load(1, nil)
