@@ -121,6 +121,7 @@ struct LaunchesView: View {
 private struct DateFilterView: View {
     @Binding var filter: LaunchFilter
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var start: Date
     @State private var end: Date
     @State private var error: String?
@@ -141,24 +142,48 @@ private struct DateFilterView: View {
                     Text("Both selected days are included. Dates use UTC to match the launch schedule.")
                 }
                 if let error { Text(error).foregroundStyle(.red) }
-                Button("Clear date range") {
-                    filter.start = nil; filter.endExclusive = nil; dismiss()
-                }.accessibilityIdentifier("clearDateRange")
+                Section {
+                    actionLayout {
+                        Button(role: .destructive) {
+                            filter.start = nil; filter.endExclusive = nil; dismiss()
+                        } label: {
+                            Label("Clear", systemImage: "xmark.circle")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.glass)
+                        .tint(.red)
+                        .accessibilityLabel("Clear date range")
+                        .accessibilityIdentifier("clearDateRange")
+
+                        Button {
+                            do {
+                                filter = try LaunchFilter.days(from: start, through: end, period: filter.period)
+                                dismiss()
+                            } catch { self.error = error.localizedDescription }
+                        } label: {
+                            Label("Apply", systemImage: "checkmark")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.glassProminent)
+                        .accessibilityIdentifier("applyDateRange")
+                    }
+                    .controlSize(.large)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                    .listRowBackground(Color.clear)
+                }
             }
             .environment(\.timeZone, TimeZone(secondsFromGMT: 0)!)
             .navigationTitle("Date range").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Apply") {
-                        do {
-                            filter = try LaunchFilter.days(from: start, through: end, period: filter.period)
-                            dismiss()
-                        } catch { self.error = error.localizedDescription }
-                    }.accessibilityIdentifier("applyDateRange")
-                }
             }
         }
         .presentationDetents([.medium, .large])
+    }
+
+    private var actionLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 12))
     }
 }
